@@ -1,0 +1,120 @@
+{
+    "gabinete": {
+        "marca": "ELO ACOUSTICS",
+        "modelo": "LIA110P",
+        "spl_max": 125.0,
+        "peso": 10.0,
+        "splay_maximo": 5.0,
+        "separacion_entre_gabinetes_mm": 3.0,
+        "distancia_entre_gabinetes_mm": 0.0,
+        "dimensiones_mm": {
+            "ancho": 0.0,
+            "alto": 261.11,
+            "profundidad": 474.13
+        },
+        "coordenadas_mm": {
+            "pivote_frontal": {
+                "x": 435.57,
+                "y": 15.57
+            },
+            "pivote_trasero": {
+                "x": 30.62,
+                "y": 192.56
+            },
+            "splay_0": {
+                "x": 23.13,
+                "y": 68.61
+            },
+            "splay_1": {
+                "x": 11.79,
+                "y": 75.1
+            },
+            "splay_2": {
+                "x": 23.45,
+                "y": 82.62
+            },
+            "splay_3": {
+                "x": 11.85,
+                "y": 89.62
+            },
+            "splay_4": {
+                "x": 23.25,
+                "y": 97.4
+            },
+            "splay_5": {
+                "x": 11.79,
+                "y": 103.92
+            }
+        }
+    },
+    "bumper": {
+        "dimensiones_mm": {
+            "ancho": 552.2,
+            "alto": 91.19
+        },
+        "coordenadas_mm": {
+            "pivote_frontal": {
+                "x": 513.07,
+                "y": 79.12
+            },
+            "pivote_trasero": {
+                "x": 109.3,
+                "y": 30.95
+            },
+            "pin_point_1": {
+                "x": 470.62,
+                "y": 31.06
+            },
+            "pin_point_2": {
+                "x": 440.7,
+                "y": 30.92
+            },
+            "pin_point_3": {
+                "x": 410.27,
+                "y": 30.77
+            },
+            "pin_point_4": {
+                "x": 380.85,
+                "y": 30.63
+            },
+            "pin_point_5": {
+                "x": 351.44,
+                "y": 30.98
+            },
+            "pin_point_6": {
+                "x": 321.01,
+                "y": 30.84
+            },
+            "pin_point_7": {
+                "x": 291.09,
+                "y": 31.7
+            },
+            "pin_point_8": {
+                "x": 260.16,
+                "y": 31.05
+            },
+            "pin_point_9": {
+                "x": 230.75,
+                "y": 30.91
+            },
+            "pin_point_10": {
+                "x": 200.83,
+                "y": 30.76
+            },
+            "pin_point_11": {
+                "x": 170.91,
+                "y": 31.62
+            },
+            "pin_point_12": {
+                "x": 140.99,
+                "y": 30.97
+            }
+        }
+    },
+    "archivos_internos": {
+        "imagen_splay": "imagen_splay.png",
+        "imagen_bumper": "imagen_bumper.png",
+        "medicion_horizontal": "medicion_horizontal_compilada.json",
+        "medicion_vertical": "medicion_vertical_compilada.json"
+    }
+}

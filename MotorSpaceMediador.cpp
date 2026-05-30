@@ -3,9 +3,8 @@
 #include <string>
 #include <vector>
 #include <cmath>
-
-// Importamos el header del motor de rigging (asumiendo que lo llamarás así)
-#include "MotorSpaceRigging.cpp"
+#include <map>
+#include "MotorSpaceRigging.hpp"
 
 namespace py = pybind11;
 
@@ -18,15 +17,15 @@ private:
     std::vector<double> last_splays;
     py::list last_geometria;
 
-    // INGENIERÍA: Instanciamos el motor de Rigging aquí para que viva dentro del Mediador
+    // Instancia del motor de Rigging
     MotorSpaceRigging motor_rigging;
 
-    // Función auxiliar para comparar doubles con tolerancia (epsilon).
+    // Función auxiliar para comparar doubles con tolerancia
     bool double_equals(double a, double b, double epsilon = 1e-4) const {
         return std::abs(a - b) < epsilon;
     }
 
-    // Comparación segura elemento por elemento para el vector de splays.
+    // Comparación de vectores de splays
     bool vector_equals(const std::vector<double>& a, const std::vector<double>& b, double epsilon = 1e-4) const {
         if (a.size() != b.size()) return false;
         for (size_t i = 0; i < a.size(); ++i) {
@@ -38,11 +37,10 @@ private:
 public:
     MediadorCache() {}
 
-    // Patrón "Dirty Flag" optimizado y blindado
+    // Patrón "Dirty Flag" para detectar cambios
     bool requiere_recalculo_rigging(std::string json, int cajas, double h, double tilt, std::vector<double> splays) {
         bool cambio = false;
         
-        // Evaluamos si hubo alguna alteración real en la mecánica
         if (json != last_json || cajas != last_cajas || 
             !double_equals(h, last_h_bumper) || 
             !double_equals(tilt, last_tilt) || 
@@ -50,7 +48,6 @@ public:
             cambio = true;
         }
 
-        // Si detectamos un cambio, actualizamos la memoria caché
         if (cambio) {
             last_json = json;
             last_cajas = cajas;
@@ -62,16 +59,11 @@ public:
         return cambio;
     }
 
-    // INGENIERÍA: Función PUENTE. Python llamará a esta función directamente.
+    // FUNCIÓN PUENTE: Obtiene o calcula geometría
     py::list obtener_o_calcular_rigging(std::string json, int cajas, double h, double tilt, std::vector<double> splays) {
-        // Consultamos a nuestra caché si los parámetros cambiaron
         if (requiere_recalculo_rigging(json, cajas, h, tilt, splays)) {
-            // Si la bandera está sucia, disparamos el cálculo del motor físico.
-            // Pasamos los parámetros necesarios para la cinemática.
             last_geometria = motor_rigging.calcularArreglo(json, cajas, h, tilt, splays);
         }
-        
-        // Retornamos la lista de Python (sea recién calculada o sacada de la caché rápida)
         return last_geometria;
     }
 
@@ -85,10 +77,9 @@ public:
 };
 
 PYBIND11_MODULE(motor_mediador, m) {
-    m.doc() = "Motor Mediador de Estado y Caché Blindado - Elo Acoustics";
+    m.doc() = "Motor Mediador de Estado y Caché - Elo Acoustics";
     py::class_<MediadorCache>(m, "MediadorCache")
         .def(py::init<>())
-        // Exponemos la nueva función principal a Python
         .def("obtener_o_calcular_rigging", &MediadorCache::obtener_o_calcular_rigging)
         .def("requiere_recalculo_rigging", &MediadorCache::requiere_recalculo_rigging)
         .def("guardar_geometria", &MediadorCache::guardar_geometria)

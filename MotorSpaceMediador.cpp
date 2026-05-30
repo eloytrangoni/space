@@ -4,7 +4,6 @@
 #include <vector>
 #include <cmath>
 #include <map>
-#include "MotorSpaceRigging.hpp"
 
 namespace py = pybind11;
 
@@ -16,9 +15,6 @@ private:
     double last_tilt = -999.0;
     std::vector<double> last_splays;
     py::list last_geometria;
-
-    // Instancia del motor de Rigging
-    MotorSpaceRigging motor_rigging;
 
     // Función auxiliar para comparar doubles con tolerancia
     bool double_equals(double a, double b, double epsilon = 1e-4) const {
@@ -37,10 +33,11 @@ private:
 public:
     MediadorCache() {}
 
-    // Patrón "Dirty Flag" para detectar cambios
+    // Patrón "Dirty Flag" para detectar cambios en parámetros mecánicos
     bool requiere_recalculo_rigging(std::string json, int cajas, double h, double tilt, std::vector<double> splays) {
         bool cambio = false;
         
+        // Detecta si algún parámetro cambió
         if (json != last_json || cajas != last_cajas || 
             !double_equals(h, last_h_bumper) || 
             !double_equals(tilt, last_tilt) || 
@@ -48,6 +45,7 @@ public:
             cambio = true;
         }
 
+        // Actualiza caché si hay cambio
         if (cambio) {
             last_json = json;
             last_cajas = cajas;
@@ -59,29 +57,39 @@ public:
         return cambio;
     }
 
-    // FUNCIÓN PUENTE: Obtiene o calcula geometría
-    py::list obtener_o_calcular_rigging(std::string json, int cajas, double h, double tilt, std::vector<double> splays) {
-        if (requiere_recalculo_rigging(json, cajas, h, tilt, splays)) {
-            last_geometria = motor_rigging.calcularArreglo(json, cajas, h, tilt, splays);
-        }
-        return last_geometria;
-    }
-
+    // Guardar geometría calculada
     void guardar_geometria(py::list geo) { 
         last_geometria = geo; 
     }
     
+    // Obtener geometría en caché
     py::list obtener_geometria() { 
         return last_geometria; 
+    }
+
+    // Obtener estado completo de caché (para debugging)
+    py::dict obtener_estado_cache() {
+        py::dict estado;
+        estado["last_json"] = last_json;
+        estado["last_cajas"] = last_cajas;
+        estado["last_h_bumper"] = last_h_bumper;
+        estado["last_tilt"] = last_tilt;
+        estado["last_splays"] = last_splays;
+        return estado;
     }
 };
 
 PYBIND11_MODULE(motor_mediador, m) {
-    m.doc() = "Motor Mediador de Estado y Caché - Elo Acoustics";
+    m.doc() = "Motor Mediador - Orquestador de Estado y Caché - Elo Acoustics";
+    
     py::class_<MediadorCache>(m, "MediadorCache")
         .def(py::init<>())
-        .def("obtener_o_calcular_rigging", &MediadorCache::obtener_o_calcular_rigging)
-        .def("requiere_recalculo_rigging", &MediadorCache::requiere_recalculo_rigging)
-        .def("guardar_geometria", &MediadorCache::guardar_geometria)
-        .def("obtener_geometria", &MediadorCache::obtener_geometria);
+        .def("requiere_recalculo_rigging", &MediadorCache::requiere_recalculo_rigging,
+             "Verifica si los parámetros mecánicos cambiaron")
+        .def("guardar_geometria", &MediadorCache::guardar_geometria,
+             "Guarda geometría en caché")
+        .def("obtener_geometria", &MediadorCache::obtener_geometria,
+             "Obtiene geometría guardada en caché")
+        .def("obtener_estado_cache", &MediadorCache::obtener_estado_cache,
+             "Obtiene estado actual de la caché para debugging");
 }

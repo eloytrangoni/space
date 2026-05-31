@@ -111,7 +111,7 @@ FREQ_1_6_OCT = ["31.5", "35.5", "40", "45", "50", "56", "63", "71", "80", "90", 
                 "9000", "10000", "11200", "12500", "14000", "16000"]
 
 # ==========================================
-# GESTOR DE ARCHIVOS
+# GESTOR DE ARCHIVOS - CORRECCIÓN CRÍTICA
 # ==========================================
 class GestorArchivosA360:
     @staticmethod
@@ -131,20 +131,43 @@ class GestorArchivosA360:
         marca_unificada = "ELO ACOUSTICS" if raw_marca.upper() == "ELO ACOUSTICS" else raw_marca
         modelo = meta.get("gabinete", {}).get("modelo", "Generic Model")
 
+        # ✅ CORRECCIÓN: Ahora extraemos los parámetros correctamente desde el JSON
+        gabinete = meta.get("gabinete", {})
+        dimensiones = gabinete.get("dimensiones_mm", {})
+        
         motor_data = {
             "Tipo": "Line Array",
-            "Alto Frontal (Y)": float(meta.get("gabinete", {}).get("dimensiones_mm", {}).get("alto", 300)) / 1000.0,
-            "Ancho Frontal (x)": float(meta.get("gabinete", {}).get("dimensiones_mm", {}).get("ancho", 500)) / 1000.0,
-            "Separacion entre cajas": float(meta.get("gabinete", {}).get("dimensiones_mm", {}).get("separacion", 10)) / 1000.0,
-            "Peso (kg)": float(meta.get("gabinete", {}).get("peso", 25)),
-            "Max SPL RMS (1m)": float(meta.get("gabinete", {}).get("spl_max", 130)),
-            "Pin_X": 0.0, "Pin_Z": 0.0,
-            "system_response": meta.get("system_response", { "frequencies": [], "vertical": {}, "horizontal": {} })
+            "Alto Frontal (Y)": float(dimensiones.get("alto", 300)) / 1000.0,
+            "Ancho Frontal (x)": float(dimensiones.get("ancho", 500)) / 1000.0,
+            "Profundidad": float(dimensiones.get("profundidad", 474)) / 1000.0,
+            "Separacion entre cajas": float(gabinete.get("separacion_entre_gabinetes_mm", 3)) / 1000.0,
+            "Peso (kg)": float(gabinete.get("peso", 25)),
+            "Max SPL RMS (1m)": float(gabinete.get("spl_max", 130)),
+            "Splay Máximo": float(gabinete.get("splay_maximo", 5.0)),
+            "Pin_X": 0.0, 
+            "Pin_Z": 0.0,
+            "system_response": meta.get("system_response", {"frequencies": [], "vertical": {}, "horizontal": {}})
         }
         
         temp_json_path = os.path.join(DB_DIR, f"{marca_unificada}_{modelo}_motor.json".replace(" ", "_"))
-        with open(temp_json_path, 'w', encoding='utf-8') as f: json.dump(motor_data, f, indent=4)
-        return f"{marca_unificada}_{modelo}", marca_unificada, modelo, motor_data, temp_json_path
+        with open(temp_json_path, 'w', encoding='utf-8') as f: 
+            json.dump(motor_data, f, indent=4)
+        
+        # ✅ TAMBIÉN guardar el metadata.json original para que los motores C++ lo lean directamente
+        meta_backup_path = os.path.join(DB_DIR, f"{marca_unificada}_{modelo}_metadata.json".replace(" ", "_"))
+        with open(meta_backup_path, 'w', encoding='utf-8') as f:
+            json.dump(meta, f, indent=4)
+        
+        print(f"[DEBUG] ✅ Motor data extraído correctamente:")
+        print(f"  - Marca: {marca_unificada}")
+        print(f"  - Modelo: {modelo}")
+        print(f"  - Alto: {motor_data['Alto Frontal (Y)']} m")
+        print(f"  - Ancho: {motor_data['Ancho Frontal (x)']} m")
+        print(f"  - Separación: {motor_data['Separacion entre cajas']} m")
+        print(f"  - Peso: {motor_data['Peso (kg)']} kg")
+        print(f"  - Max SPL: {motor_data['Max SPL RMS (1m)']} dB")
+        
+        return f"{marca_unificada}_{modelo}", marca_unificada, modelo, motor_data, meta_backup_path
 
 # ==========================================
 # WORKERS Y CLASES DE UI INFERIOR

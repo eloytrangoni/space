@@ -27,7 +27,16 @@ void cargar_json_motor(const std::string& json_path) {
     if (db.find(json_path) == db.end()) {
         std::ifstream file(json_path);
         if (file.is_open()) {
-            try { json j; file >> j; db[json_path] = j; } catch (...) {}
+            try { 
+                json j; 
+                file >> j; 
+                db[json_path] = j;
+                std::cerr << "[DEBUG] ✅ JSON cargado en motor_acustico: " << json_path << std::endl;
+            } catch (const std::exception& e) {
+                std::cerr << "[ERROR] Fallo al parsear JSON: " << e.what() << std::endl;
+            }
+        } else {
+            std::cerr << "[ERROR] No se pudo abrir archivo: " << json_path << std::endl;
         }
     }
 }
@@ -40,8 +49,15 @@ std::vector<CajaGeom> extraer_geometria(const std::string& json_path, const py::
     auto& db = get_db();
     double spl_max_global = 130.0; 
     
+    // ✅ CORRECCIÓN: Leer spl_max desde el JSON cargado
     if (db.find(json_path) != db.end() && db[json_path].is_object()) {
-        spl_max_global = db[json_path].value("Max SPL RMS (1m)", 130.0);
+        try {
+            auto gabinete = db[json_path].value("gabinete", json::object());
+            spl_max_global = gabinete.value("spl_max", 130.0);
+            std::cerr << "[DEBUG] SPL Max del gabinete: " << spl_max_global << " dB" << std::endl;
+        } catch (...) {
+            std::cerr << "[WARNING] No se pudo extraer spl_max, usando default" << std::endl;
+        }
     }
 
     std::vector<CajaGeom> cajas;
@@ -84,6 +100,9 @@ py::array_t<double> calcular_mapeo_spl(const std::string& json_path, const py::l
     double* ptr_res = static_cast<double*>(buf_res.ptr);
 
     std::vector<CajaGeom> cajas = extraer_geometria(json_path, geometria);
+    
+    std::cerr << "[DEBUG] Calculando mapeo lateral con " << cajas.size() << " cajas" << std::endl;
+    
     double c = 331.4 + 0.6 * temp; 
     double k = (freq > 0.0) ? (2.0 * M_PI * freq) / c : 0.0; 
     double air_absorption = (temp > 25.0 && hum < 50.0) ? 0.04 : 0.01;
@@ -140,6 +159,9 @@ py::array_t<double> calcular_mapeo_spl_sup(const std::string& json_path, const p
     double* ptr_res = static_cast<double*>(buf_res.ptr);
 
     std::vector<CajaGeom> cajas = extraer_geometria(json_path, geometria);
+    
+    std::cerr << "[DEBUG] Calculando mapeo superior a altura " << aud_escucha << "m" << std::endl;
+    
     double c = 331.4 + 0.6 * temp;
     double k = (freq > 0.0) ? (2.0 * M_PI * freq) / c : 0.0;
     double air_absorption = (temp > 25.0 && hum < 50.0) ? 0.04 : 0.01;
